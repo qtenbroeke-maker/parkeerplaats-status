@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mijn Parkeerplaats</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+            padding-top: 50px;
+        }
+
+        .container {
+            background: white;
+            max-width: 500px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .status {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 30px 0;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .available {
+            background-color: #28a745;
+        }
+
+        .occupied {
+            background-color: #dc3545;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #0078d4;
+            color: white;
+        }
+
+        button:hover {
+            background: #005fa3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Parkeerplaats Status</h1>
+
+    <div id="statusBox" class="status">
+        Beschikbaar
+    </div>
+
+    <button onclick="toggleStatus()">
+        Status wijzigen
+    </button>
+</div>
+
+<script>
+    const statusBox = document.getElementById("statusBox");
+
+    let available = localStorage.getItem("parkingStatus");
+
+    if (available === null) {
+        available = "true";
+    }
+
+    updateDisplay();
+
+    function toggleStatus() {
+        available = available === "true" ? "false" : "true";
+        localStorage.setItem("parkingStatus", available);
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        if (available === "true") {
+            statusBox.textContent = "✅ Beschikbaar";
+            statusBox.className = "status available";
+        } else {
+            statusBox.textContent = "🚗 Bezet";
+            statusBox.className = "status occupied";
+        }
+    }
+</script>
+
+</body>
+</html>

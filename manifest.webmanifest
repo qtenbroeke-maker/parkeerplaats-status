@@ -1,0 +1,10 @@
+{
+  "id": "/parkeerplaats-status/",
+  "name": "Parkeerplaats 23A",
+  "short_name": "Plek 23A",
+  "start_url": "/parkeerplaats-status/",
+  "scope": "/parkeerplaats-status/",
+  "display": "standalone",
+  "background_color": "#f5f7f3",
+  "theme_color": "#1f6849"
+}

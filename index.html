@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f6f2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Parkeerplek 23A">
+  <link rel="manifest" href="./manifest.webmanifest">
   <title>Parkeerplaats 23A reserveren</title>
   <style>
     :root{--ink:#18241e;--muted:#718078;--line:#e5eae5;--paper:#fff;--wash:#f5f7f3;--green:#1f6849;--green-soft:#e5f3e9;--amber:#f0b952;--shadow:0 18px 52px #24352b0b}
@@ -39,6 +42,11 @@
           </form>
           <p class="hint">Na de eindtijd wordt de plek vanzelf weer als beschikbaar getoond. Reserveringen mogen niet overlappen.</p>
         </section>
+        <section class="card form-card"><h2 class="side-title">Meldingen op jouw iPhone</h2><p class="side-desc">Alleen het ingeschreven toestel ontvangt meldingen bij een reservering of verwijdering.</p>
+          <div class="field"><label for="pushCode">Privé-activatiecode</label><input id="pushCode" type="password" autocomplete="off" placeholder="Code voor jouw toestel"></div>
+          <button class="primary" id="enablePush" type="button">Meldingen aanzetten</button>
+          <p class="hint">Zet de pagina eerst via Safari op je beginscherm. Tik daarna hier en sta meldingen toe. Je kunt ze altijd beheren via iPhone-instellingen.</p>
+        </section>
         <section class="card log-card"><div class="log-head"><h2 class="side-title">Wijzigingen</h2><span class="log-count" id="logCount"></span></div><div class="log-list" id="logList"></div></section>
       </aside>
     </div>
@@ -51,6 +59,7 @@
     // voor de browser zolang de databasepolicies actief zijn.
     const SUPABASE_URL='https://iknvqfyeotjyebpiufum.supabase.co', SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrbnZxZnllb3RqeWVicGl1ZnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MjkxNTksImV4cCI6MjEwNjUwNTE1OX0.sLgvkq6duu4frl9CQal_9EeqXDSw4Sc4WCeEQjNcGRc';
     const configured=SUPABASE_URL.startsWith('https://')&&(SUPABASE_KEY.startsWith('sb_publishable_')||SUPABASE_KEY.startsWith('eyJ'));
+    const PUSH_PUBLIC_KEY='BAipPKs9xZGfYbzAgcZIe5TdWriNpV7-JKUTht8ozxiEHL3hpH1vcZmT-X26G8H2XsixSGaI9WFCKOPpOGL2gYo';
     const db=configured?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
     const $=s=>document.querySelector(s); const now=()=>new Date();
     let bookings=[], logs=[], offset=0, ready=false;
@@ -68,12 +77,16 @@
     function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
     let toastTimer;function toast(t){let e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2600)}
     async function refresh(){if(!db)return;const [br,lr]=await Promise.all([db.from('parking_reservations').select('*').order('start_at'),db.from('parking_changes').select('*').order('created_at',{ascending:false}).limit(50)]);if(br.error||lr.error){console.error(br.error||lr.error);$('#status').textContent='● Verbinding mislukt';$('#status').classList.add('busy');return}bookings=br.data.map(x=>({id:x.id,name:x.name,start:x.start_at,end:x.end_at}));logs=lr.data.map(x=>({name:x.name,action:x.action,at:x.created_at}));ready=true;draw()}
-    async function log(name,action){const {error}=await db.from('parking_changes').insert({name,action});if(error)console.error(error)}
+    async function sendPush(changeId){if(!db||!changeId)return;const {error}=await db.functions.invoke('parking-push',{body:{type:'notify',change_id:changeId}});if(error)console.error(error)}
+    async function log(name,action){const {data,error}=await db.from('parking_changes').insert({name,action}).select('id').single();if(error){console.error(error);return null}sendPush(data.id);return data.id}
     $('#bookingForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){toast('Stel eerst de Supabase-gegevens in.');return}let name=$('#name').value.trim(),a=new Date($('#start').value),b=new Date($('#end').value),n=now(),limit=new Date(n.getTime()+7*24*60*60*1000);if(!name)return;if(!(b>a)){toast('De eindtijd moet na de begintijd liggen.');return}if(a<n||b<=n){toast('Kies een tijd in de toekomst.');return}if(b>limit){toast('Kies een tijd binnen de komende 7 dagen.');return}let overlap=bookings.some(x=>a<new Date(x.end)&&b>new Date(x.start));if(overlap){toast('Deze tijd overlapt met een andere reservering.');return}const {error}=await db.from('parking_reservations').insert({name,start_at:a.toISOString(),end_at:b.toISOString()});if(error){toast(error.code==='23P01'?'Iemand heeft dit tijdvak net gereserveerd. Kies een ander tijdstip.':'Opslaan is niet gelukt. Controleer de verbinding.');await refresh();return}await log(name,`heeft ${fmt(a,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}–${fmt(b,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} gereserveerd`);await refresh();e.target.reset();toast('Reservering gedeeld en opgeslagen.')});
     async function removeBooking(id){if(!db)return;let b=bookings.find(x=>x.id===id);if(!b)return;let actor=$('#name').value.trim()||prompt('Wat is je naam?');if(!actor)return;const {error}=await db.from('parking_reservations').delete().eq('id',id);if(error){toast('Verwijderen is niet gelukt.');return}await log(actor,`heeft de reservering van ${b.name} verwijderd`);await refresh();toast('Reservering verwijderd.')}
+    function urlBase64ToUint8Array(s){const padded=s+'='.repeat((4-s.length%4)%4);return Uint8Array.from(atob(padded.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0))}
+    $('#enablePush').addEventListener('click',async()=>{if(!db){toast('De gedeelde database is niet beschikbaar.');return}let code=$('#pushCode').value.trim();if(!code){toast('Vul je privé-activatiecode in.');return}if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)){toast('Pushmeldingen worden niet ondersteund in deze browser.');return}let permission=await Notification.requestPermission();if(permission!=='granted'){toast('Meldingen zijn niet toegestaan. Controleer de iPhone-instellingen.');return}try{let registration=await navigator.serviceWorker.register('./sw.js');let subscription=await registration.pushManager.getSubscription();if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)});const {error}=await db.functions.invoke('parking-push',{body:{type:'subscribe',code,subscription}});if(error)throw error;toast('Deze iPhone ontvangt nu meldingen.');$('#enablePush').textContent='Deze iPhone is aangemeld'}catch(err){console.error(err);toast('Inschrijven is niet gelukt. Controleer de code en probeer opnieuw.')}});
     $('#prev').onclick=()=>{offset--;drawGrid()};$('#next').onclick=()=>{offset++;drawGrid()};
     let from=new Date();from.setMinutes(0,0,0);if(from<=now())from.setHours(from.getHours()+1);let to=new Date(from);to.setHours(to.getHours()+1);$('#start').value=localInput(from);$('#end').value=localInput(to);
     draw();
+    if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(console.error);
     if(db){refresh();db.channel('parking-23a-live').on('postgres_changes',{event:'*',schema:'public',table:'parking_reservations'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'parking_changes'},refresh).subscribe();$('#status').textContent='● Verbinden…'}else{$('#status').textContent='● Nog niet gekoppeld';$('#status').classList.add('busy')}
     setInterval(()=>{drawStatus();drawGrid()},60000);
   </script>

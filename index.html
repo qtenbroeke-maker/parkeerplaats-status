@@ -21,7 +21,7 @@
 </head>
 <body>
   <main class="shell">
-    <header class="top"><div class="brand"><span class="brand-mark">↗</span> Parkeerplaats delen</div><div class="local-tag"><i></i> Wijzigingen worden op dit apparaat bewaard</div></header>
+    <header class="top"><div class="brand"><span class="brand-mark">↗</span> Parkeerplaats delen</div><div class="local-tag"><i></i> Gedeelde planning</div></header>
     <section class="intro"><div><div class="eyebrow">Gedeelde parkeerplek</div><h1>Parkeerplaats 23A</h1><p>Bekijk de planning en reserveer een tijd waarop de plek bezet is.</p></div><div class="status" id="status">● Nu beschikbaar</div></section>
     <div class="layout">
       <section class="card calendar" aria-label="Weekplanning">
@@ -42,15 +42,18 @@
         <section class="card log-card"><div class="log-head"><h2 class="side-title">Wijzigingen</h2><span class="log-count" id="logCount"></span></div><div class="log-list" id="logList"></div></section>
       </aside>
     </div>
-    <p class="foot">Deze demo bewaart reserveringen alleen in de browser op dit apparaat. Om wijzigingen met buren te delen, moet de pagina online staan met een gedeelde database.</p>
+    <p class="foot">Reserveringen en wijzigingen worden gedeeld met iedereen die deze pagina opent.</p>
   </main>
   <div class="toast" id="toast" role="status"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const KEY='parking-23a-reservations-v1', LOG='parking-23a-log-v1';
+    // Publieke clientgegevens van dit Supabase-project. De anon-key is veilig
+    // voor de browser zolang de databasepolicies actief zijn.
+    const SUPABASE_URL='https://iknvqfyeotjyebpiufum.supabase.co', SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrbnZxZnllb3RqeWVicGl1ZnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MjkxNTksImV4cCI6MjEwNjUwNTE1OX0.sLgvkq6duu4frl9CQal_9EeqXDSw4Sc4WCeEQjNcGRc';
+    const configured=SUPABASE_URL.startsWith('https://')&&(SUPABASE_KEY.startsWith('sb_publishable_')||SUPABASE_KEY.startsWith('eyJ'));
+    const db=configured?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
     const $=s=>document.querySelector(s); const now=()=>new Date();
-    let bookings=read(KEY,[]), logs=read(LOG,[]), offset=0;
-    function read(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}}
-    function save(){localStorage.setItem(KEY,JSON.stringify(bookings));localStorage.setItem(LOG,JSON.stringify(logs))}
+    let bookings=[], logs=[], offset=0, ready=false;
     function pad(n){return String(n).padStart(2,'0')}
     function localInput(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
     function weekStart(){let d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+offset*7);return d}
@@ -61,15 +64,18 @@
       for(let h=0;h<24;h++){html+=`<div class="hour">${pad(h)}:00</div>`;for(let day=0;day<7;day++){let cellStart=new Date(start);cellStart.setDate(cellStart.getDate()+day);cellStart.setHours(h);let cellEnd=new Date(cellStart);cellEnd.setHours(h+1);let b=bookings.find(x=>new Date(x.start)<cellEnd&&new Date(x.end)>cellStart);let content=b?`<div class="reservation" data-id="${b.id}" title="${esc(b.name)} · ${fmt(new Date(b.start),{hour:'2-digit',minute:'2-digit'})}–${fmt(new Date(b.end),{hour:'2-digit',minute:'2-digit'})}"><strong>${esc(b.name)}</strong><span>${fmt(new Date(b.start),{hour:'2-digit',minute:'2-digit'})}–${fmt(new Date(b.end),{hour:'2-digit',minute:'2-digit'})}</span></div>`:'';let line=now()>=cellStart&&now()<cellEnd?'<i class="now-line"></i>':'';html+=`<div class="slot">${content}${line}</div>`}}
       $('#weekGrid').innerHTML=html;$('#weekGrid').querySelectorAll('.reservation').forEach(el=>el.addEventListener('click',()=>removeBooking(el.dataset.id)))}
     function drawStatus(){let n=now(),b=bookings.find(x=>new Date(x.start)<=n&&new Date(x.end)>n),s=$('#status');s.textContent=b?`● Bezet · ${b.name}`:'● Nu beschikbaar';s.classList.toggle('busy',!!b)}
-    function drawLog(){let list=$('#logList');$('#logCount').textContent=logs.length?`${logs.length} ${logs.length===1?'wijziging':'wijzigingen'}`:'';list.innerHTML=logs.length?logs.slice(0,8).map(x=>`<div class="log-item"><div class="avatar">${esc((x.name||'?').trim().slice(0,1).toUpperCase())}</div><div class="log-copy"><strong>${esc(x.name)}</strong> ${esc(x.action)}<time>${fmt(new Date(x.at),{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time></div></div>`).join(''):'<div class="empty">Nog geen wijzigingen. Reserveringen verschijnen hier.</div>'}
+    function drawLog(){let list=$('#logList');$('#logCount').textContent=logs.length?`${logs.length} ${logs.length===1?'wijziging':'wijzigingen'}`:'';list.innerHTML=logs.length?logs.slice(0,8).map(x=>`<div class="log-item"><div class="avatar">${esc((x.name||'?').trim().slice(0,1).toUpperCase())}</div><div class="log-copy"><strong>${esc(x.name)}</strong> ${esc(x.action)}<time>${fmt(new Date(x.at),{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time></div></div>`).join(''):!ready?'<div class="empty">Verbinding maken…</div>':'<div class="empty">Nog geen wijzigingen. Reserveringen verschijnen hier.</div>'}
     function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
     let toastTimer;function toast(t){let e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2600)}
-    function log(name,action){logs.unshift({name,action,at:now().toISOString()});logs=logs.slice(0,50);save()}
-    $('#bookingForm').addEventListener('submit',e=>{e.preventDefault();let name=$('#name').value.trim(),a=new Date($('#start').value),b=new Date($('#end').value),n=now();if(!name)return;if(!(b>a)){toast('De eindtijd moet na de begintijd liggen.');return}if(b<=n){toast('Kies een eindtijd in de toekomst.');return}let overlap=bookings.some(x=>a<new Date(x.end)&&b>new Date(x.start));if(overlap){toast('Deze tijd overlapt met een andere reservering.');return}bookings.push({id:crypto.randomUUID(),name,start:a.toISOString(),end:b.toISOString()});bookings.sort((x,y)=>new Date(x.start)-new Date(y.start));log(name,`heeft ${fmt(a,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}–${fmt(b,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} gereserveerd`);save();draw();e.target.reset();toast('Reservering opgeslagen.')});
-    function removeBooking(id){let b=bookings.find(x=>x.id===id);if(!b)return;bookings=bookings.filter(x=>x.id!==id);log($('#name').value.trim()||'Gebruiker',`heeft de reservering van ${b.name} verwijderd`);save();draw();toast('Reservering verwijderd.')}
+    async function refresh(){if(!db)return;const [br,lr]=await Promise.all([db.from('parking_reservations').select('*').order('start_at'),db.from('parking_changes').select('*').order('created_at',{ascending:false}).limit(50)]);if(br.error||lr.error){console.error(br.error||lr.error);$('#status').textContent='● Verbinding mislukt';$('#status').classList.add('busy');return}bookings=br.data.map(x=>({id:x.id,name:x.name,start:x.start_at,end:x.end_at}));logs=lr.data.map(x=>({name:x.name,action:x.action,at:x.created_at}));ready=true;draw()}
+    async function log(name,action){const {error}=await db.from('parking_changes').insert({name,action});if(error)console.error(error)}
+    $('#bookingForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){toast('Stel eerst de Supabase-gegevens in.');return}let name=$('#name').value.trim(),a=new Date($('#start').value),b=new Date($('#end').value),n=now(),limit=new Date(n.getTime()+7*24*60*60*1000);if(!name)return;if(!(b>a)){toast('De eindtijd moet na de begintijd liggen.');return}if(a<n||b<=n){toast('Kies een tijd in de toekomst.');return}if(b>limit){toast('Kies een tijd binnen de komende 7 dagen.');return}let overlap=bookings.some(x=>a<new Date(x.end)&&b>new Date(x.start));if(overlap){toast('Deze tijd overlapt met een andere reservering.');return}const {error}=await db.from('parking_reservations').insert({name,start_at:a.toISOString(),end_at:b.toISOString()});if(error){toast(error.code==='23P01'?'Iemand heeft dit tijdvak net gereserveerd. Kies een ander tijdstip.':'Opslaan is niet gelukt. Controleer de verbinding.');await refresh();return}await log(name,`heeft ${fmt(a,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}–${fmt(b,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} gereserveerd`);await refresh();e.target.reset();toast('Reservering gedeeld en opgeslagen.')});
+    async function removeBooking(id){if(!db)return;let b=bookings.find(x=>x.id===id);if(!b)return;let actor=$('#name').value.trim()||prompt('Wat is je naam?');if(!actor)return;const {error}=await db.from('parking_reservations').delete().eq('id',id);if(error){toast('Verwijderen is niet gelukt.');return}await log(actor,`heeft de reservering van ${b.name} verwijderd`);await refresh();toast('Reservering verwijderd.')}
     $('#prev').onclick=()=>{offset--;drawGrid()};$('#next').onclick=()=>{offset++;drawGrid()};
     let from=new Date();from.setMinutes(0,0,0);if(from<=now())from.setHours(from.getHours()+1);let to=new Date(from);to.setHours(to.getHours()+1);$('#start').value=localInput(from);$('#end').value=localInput(to);
-    draw();setInterval(draw,60000);
+    draw();
+    if(db){refresh();db.channel('parking-23a-live').on('postgres_changes',{event:'*',schema:'public',table:'parking_reservations'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'parking_changes'},refresh).subscribe();$('#status').textContent='● Verbinden…'}else{$('#status').textContent='● Nog niet gekoppeld';$('#status').classList.add('busy')}
+    setInterval(()=>{drawStatus();drawGrid()},60000);
   </script>
 </body>
 </html>

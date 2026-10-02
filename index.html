@@ -1,100 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mijn Parkeerplaats</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background: #f4f4f4;
-            padding-top: 50px;
-        }
-
-        .container {
-            background: white;
-            max-width: 500px;
-            margin: auto;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-        }
-
-        .status {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 30px 0;
-            padding: 20px;
-            border-radius: 10px;
-            color: white;
-        }
-
-        .available {
-            background-color: #28a745;
-        }
-
-        .occupied {
-            background-color: #dc3545;
-        }
-
-        button {
-            font-size: 18px;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #0078d4;
-            color: white;
-        }
-
-        button:hover {
-            background: #005fa3;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f2">
+  <title>Parkeerplaats 23A reserveren</title>
+  <style>
+    :root{--ink:#18241e;--muted:#718078;--line:#e5eae5;--paper:#fff;--wash:#f5f7f3;--green:#1f6849;--green-soft:#e5f3e9;--amber:#f0b952;--shadow:0 18px 52px #24352b0b}
+    *{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:34px 28px 60px}
+    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:34px}.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.02em}.brand-mark{height:36px;width:36px;border-radius:12px;background:var(--green);color:white;display:grid;place-items:center;font-size:19px}.local-tag{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:7px}.local-tag i{width:7px;height:7px;border-radius:50%;background:#50a578}
+    .intro{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:25px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--green);margin-bottom:9px}.intro h1{font-size:clamp(30px,4vw,42px);letter-spacing:-.045em;line-height:1.06;margin:0}.intro p{color:var(--muted);margin:11px 0 0;font-size:14px}.status{background:var(--green-soft);color:#256342;border-radius:999px;padding:10px 14px;font-size:13px;font-weight:650;white-space:nowrap}.status.busy{background:#fff0d9;color:#946210}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:20px;align-items:start}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.calendar{overflow:hidden}.cal-head{padding:19px 22px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}.cal-title{font-weight:700;font-size:15px}.cal-sub{font-size:12px;color:var(--muted);margin-top:3px}.nav{display:flex;align-items:center;gap:7px}.nav button{height:34px;width:36px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink);font-size:17px}.nav button:hover{background:var(--wash)}.week-label{font-size:12px;color:var(--muted);min-width:90px;text-align:center}
+    .grid-scroll{overflow:auto;max-height:660px}.week-grid{min-width:700px;display:grid;grid-template-columns:58px repeat(7,minmax(82px,1fr))}.corner{position:sticky;top:0;z-index:3;background:#fff;border-bottom:1px solid var(--line)}.day-head{position:sticky;top:0;z-index:2;background:#fff;text-align:center;padding:12px 4px 11px;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}.day-head .dow{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.day-head .date{font-size:14px;font-weight:700;margin-top:3px}.day-head.today .date{display:inline-grid;place-items:center;background:var(--green);color:white;width:27px;height:27px;border-radius:50%}.hour{height:43px;text-align:right;padding:0 9px 0 0;color:#89958e;font-size:10px;transform:translateY(-7px);border-right:1px solid var(--line)}.slot{height:43px;border-left:1px solid var(--line);border-bottom:1px solid #edf0ed;position:relative;padding:2px}.slot:nth-child(odd){background:#fcfdfb}.reservation{height:100%;border-radius:6px;background:var(--green-soft);border-left:3px solid #4c9b69;padding:3px 5px;color:#24583a;font-size:10px;line-height:1.25;overflow:hidden}.reservation strong{display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.reservation span{font-size:9px;opacity:.8}.now-line{position:absolute;left:-1px;right:0;top:50%;height:2px;background:#e47d59;z-index:1;pointer-events:none}.now-line:before{content:"";position:absolute;left:-3px;top:-3px;width:7px;height:7px;background:#e47d59;border-radius:50%}
+    .side{display:grid;gap:16px}.form-card{padding:20px}.side-title{font-size:16px;font-weight:720;letter-spacing:-.02em;margin:0}.side-desc{margin:5px 0 18px;font-size:12px;color:var(--muted)}.field{margin-top:13px}.field label{display:block;font-weight:650;font-size:12px;margin-bottom:6px}.field input{width:100%;height:41px;border:1px solid #dce3dd;border-radius:9px;padding:0 11px;background:#fff;color:var(--ink);outline:none}.field input:focus{border-color:#58a379;box-shadow:0 0 0 3px #58a37920}.times{display:grid;grid-template-columns:1fr 1fr;gap:10px}.primary{width:100%;border:0;border-radius:10px;background:var(--green);color:#fff;height:43px;font-weight:700;margin-top:18px}.primary:hover{background:#18573d}.hint{font-size:11px;color:var(--muted);margin:11px 1px 0;line-height:1.5}.log-card{padding:19px 20px}.log-head{display:flex;justify-content:space-between;align-items:center}.log-count{font-size:11px;color:var(--muted)}.log-list{margin-top:14px;display:grid;gap:13px}.log-item{display:grid;grid-template-columns:28px 1fr;gap:9px;align-items:start}.avatar{width:27px;height:27px;border-radius:9px;background:#eef2ed;color:#54705c;display:grid;place-items:center;font-size:11px;font-weight:700}.log-copy{font-size:11px;line-height:1.4}.log-copy strong{font-weight:700}.log-copy time{display:block;color:#89958e;font-size:10px;margin-top:3px}.empty{font-size:12px;color:var(--muted);padding:8px 0}.legend{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);padding:14px 21px;border-top:1px solid var(--line)}.legend i{width:10px;height:10px;border-radius:3px;background:var(--green-soft);border:1px solid #b5d8c0}
+    .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,15px);background:#20372b;color:#fff;padding:11px 16px;border-radius:11px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;box-shadow:0 8px 24px #0002}.toast.show{opacity:1;transform:translate(-50%,0)}.foot{font-size:11px;color:#869189;text-align:center;margin:22px auto 0;max-width:650px}
+    @media(max-width:820px){.layout{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}.intro{align-items:flex-start;flex-direction:column;gap:14px}.status{align-self:flex-start}}
+    @media(max-width:570px){.shell{padding:20px 14px 38px}.top{margin-bottom:27px}.local-tag{font-size:0}.local-tag i{font-size:initial}.side{grid-template-columns:1fr}.cal-head{padding:16px}.grid-scroll{max-height:560px}.week-label{min-width:66px}.week-grid{grid-template-columns:45px repeat(7,minmax(72px,1fr))}.hour{padding-right:6px}.form-card,.log-card{padding:18px}}
+  </style>
 </head>
 <body>
-
-<div class="container">
-    <h1>Parkeerplaats Status</h1>
-
-    <div id="statusBox" class="status">
-        Beschikbaar
+  <main class="shell">
+    <header class="top"><div class="brand"><span class="brand-mark">↗</span> Parkeerplaats delen</div><div class="local-tag"><i></i> Wijzigingen worden op dit apparaat bewaard</div></header>
+    <section class="intro"><div><div class="eyebrow">Gedeelde parkeerplek</div><h1>Parkeerplaats 23A</h1><p>Bekijk de planning en reserveer een tijd waarop de plek bezet is.</p></div><div class="status" id="status">● Nu beschikbaar</div></section>
+    <div class="layout">
+      <section class="card calendar" aria-label="Weekplanning">
+        <div class="cal-head"><div><div class="cal-title">Weekplanning</div><div class="cal-sub">24 uur per dag · 7 dagen vooruit</div></div><div class="nav"><button id="prev" aria-label="Vorige week">‹</button><div class="week-label" id="weekLabel"></div><button id="next" aria-label="Volgende week">›</button></div></div>
+        <div class="grid-scroll"><div class="week-grid" id="weekGrid"></div></div>
+        <div class="legend"><i></i> Gereserveerd <span style="margin-left:auto;color:#89958e">Tik op een reservering om deze te verwijderen</span></div>
+      </section>
+      <aside class="side">
+        <section class="card form-card"><h2 class="side-title">Reserveer de plek</h2><p class="side-desc">Vul je naam en de begin- en eindtijd in.</p>
+          <form id="bookingForm">
+            <div class="field"><label for="name">Jouw naam</label><input id="name" name="name" placeholder="Bijv. Sam" maxlength="50" required></div>
+            <div class="field"><label for="start">Bezet vanaf</label><input id="start" type="datetime-local" required></div>
+            <div class="field"><label for="end">Vrij vanaf</label><input id="end" type="datetime-local" required></div>
+            <button class="primary" type="submit">Tijd reserveren</button>
+          </form>
+          <p class="hint">Na de eindtijd wordt de plek vanzelf weer als beschikbaar getoond. Reserveringen mogen niet overlappen.</p>
+        </section>
+        <section class="card log-card"><div class="log-head"><h2 class="side-title">Wijzigingen</h2><span class="log-count" id="logCount"></span></div><div class="log-list" id="logList"></div></section>
+      </aside>
     </div>
-
-    <button onclick="toggleStatus()">
-        Status wijzigen
-    </button>
-</div>
-
-<script>
-    const statusBox = document.getElementById("statusBox");
-
-    let available = localStorage.getItem("parkingStatus");
-
-    if (available === null) {
-        available = "true";
-    }
-
-    updateDisplay();
-
-    function toggleStatus() {
-        available = available === "true" ? "false" : "true";
-        localStorage.setItem("parkingStatus", available);
-        updateDisplay();
-    }
-
-    function updateDisplay() {
-        if (available === "true") {
-            statusBox.textContent = "✅ Beschikbaar";
-            statusBox.className = "status available";
-        } else {
-            statusBox.textContent = "🚗 Bezet";
-            statusBox.className = "status occupied";
-        }
-    }
-</script>
-
+    <p class="foot">Deze demo bewaart reserveringen alleen in de browser op dit apparaat. Om wijzigingen met buren te delen, moet de pagina online staan met een gedeelde database.</p>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const KEY='parking-23a-reservations-v1', LOG='parking-23a-log-v1';
+    const $=s=>document.querySelector(s); const now=()=>new Date();
+    let bookings=read(KEY,[]), logs=read(LOG,[]), offset=0;
+    function read(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}}
+    function save(){localStorage.setItem(KEY,JSON.stringify(bookings));localStorage.setItem(LOG,JSON.stringify(logs))}
+    function pad(n){return String(n).padStart(2,'0')}
+    function localInput(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
+    function weekStart(){let d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+offset*7);return d}
+    function fmt(d,opts){return new Intl.DateTimeFormat('nl-NL',opts).format(d)}
+    function draw(){drawGrid();drawStatus();drawLog()}
+    function drawGrid(){let start=weekStart(), end=new Date(start);end.setDate(end.getDate()+7);$('#weekLabel').textContent=`${fmt(start,{day:'numeric',month:'short'})} – ${fmt(new Date(end-1),{day:'numeric',month:'short'})}`;
+      let html='<div class="corner"></div>';for(let i=0;i<7;i++){let d=new Date(start);d.setDate(d.getDate()+i);let today=d.toDateString()===now().toDateString();html+=`<div class="day-head ${today?'today':''}"><div class="dow">${fmt(d,{weekday:'short'})}</div><div class="date">${today?d.getDate():d.getDate()}</div></div>`}
+      for(let h=0;h<24;h++){html+=`<div class="hour">${pad(h)}:00</div>`;for(let day=0;day<7;day++){let cellStart=new Date(start);cellStart.setDate(cellStart.getDate()+day);cellStart.setHours(h);let cellEnd=new Date(cellStart);cellEnd.setHours(h+1);let b=bookings.find(x=>new Date(x.start)<cellEnd&&new Date(x.end)>cellStart);let content=b?`<div class="reservation" data-id="${b.id}" title="${esc(b.name)} · ${fmt(new Date(b.start),{hour:'2-digit',minute:'2-digit'})}–${fmt(new Date(b.end),{hour:'2-digit',minute:'2-digit'})}"><strong>${esc(b.name)}</strong><span>${fmt(new Date(b.start),{hour:'2-digit',minute:'2-digit'})}–${fmt(new Date(b.end),{hour:'2-digit',minute:'2-digit'})}</span></div>`:'';let line=now()>=cellStart&&now()<cellEnd?'<i class="now-line"></i>':'';html+=`<div class="slot">${content}${line}</div>`}}
+      $('#weekGrid').innerHTML=html;$('#weekGrid').querySelectorAll('.reservation').forEach(el=>el.addEventListener('click',()=>removeBooking(el.dataset.id)))}
+    function drawStatus(){let n=now(),b=bookings.find(x=>new Date(x.start)<=n&&new Date(x.end)>n),s=$('#status');s.textContent=b?`● Bezet · ${b.name}`:'● Nu beschikbaar';s.classList.toggle('busy',!!b)}
+    function drawLog(){let list=$('#logList');$('#logCount').textContent=logs.length?`${logs.length} ${logs.length===1?'wijziging':'wijzigingen'}`:'';list.innerHTML=logs.length?logs.slice(0,8).map(x=>`<div class="log-item"><div class="avatar">${esc((x.name||'?').trim().slice(0,1).toUpperCase())}</div><div class="log-copy"><strong>${esc(x.name)}</strong> ${esc(x.action)}<time>${fmt(new Date(x.at),{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time></div></div>`).join(''):'<div class="empty">Nog geen wijzigingen. Reserveringen verschijnen hier.</div>'}
+    function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+    let toastTimer;function toast(t){let e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2600)}
+    function log(name,action){logs.unshift({name,action,at:now().toISOString()});logs=logs.slice(0,50);save()}
+    $('#bookingForm').addEventListener('submit',e=>{e.preventDefault();let name=$('#name').value.trim(),a=new Date($('#start').value),b=new Date($('#end').value),n=now();if(!name)return;if(!(b>a)){toast('De eindtijd moet na de begintijd liggen.');return}if(b<=n){toast('Kies een eindtijd in de toekomst.');return}let overlap=bookings.some(x=>a<new Date(x.end)&&b>new Date(x.start));if(overlap){toast('Deze tijd overlapt met een andere reservering.');return}bookings.push({id:crypto.randomUUID(),name,start:a.toISOString(),end:b.toISOString()});bookings.sort((x,y)=>new Date(x.start)-new Date(y.start));log(name,`heeft ${fmt(a,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}–${fmt(b,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} gereserveerd`);save();draw();e.target.reset();toast('Reservering opgeslagen.')});
+    function removeBooking(id){let b=bookings.find(x=>x.id===id);if(!b)return;bookings=bookings.filter(x=>x.id!==id);log($('#name').value.trim()||'Gebruiker',`heeft de reservering van ${b.name} verwijderd`);save();draw();toast('Reservering verwijderd.')}
+    $('#prev').onclick=()=>{offset--;drawGrid()};$('#next').onclick=()=>{offset++;drawGrid()};
+    let from=new Date();from.setMinutes(0,0,0);if(from<=now())from.setHours(from.getHours()+1);let to=new Date(from);to.setHours(to.getHours()+1);$('#start').value=localInput(from);$('#end').value=localInput(to);
+    draw();setInterval(draw,60000);
+  </script>
 </body>
 </html>
